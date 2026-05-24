@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Pesquisa Clínica</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen pb-12">
+
+    <header class="bg-blue-700 text-white shadow-md p-4 sticky top-0 z-50">
+        <div class="max-w-xl mx-auto flex justify-between items-center">
+            <h1 class="text-lg font-bold tracking-wide">Faturamento • Pesquisa Clínica</h1>
+            <span id="contador" class="bg-blue-800 text-xs font-semibold px-2.5 py-1 rounded-full">0 Visitas</span>
+        </div>
+    </header>
+
+    <main class="max-w-xl mx-auto p-4 space-y-6">
+
+        <section class="bg-white rounded-xl shadow-xs p-5 border border-slate-200">
+            <h2 class="text-md font-bold text-slate-700 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
+                <span>📝</span> Nova Visita Diária
+            </h2>
+            
+            <form id="formVisita" class="space-y-4" onsubmit="salvarRegistro(event)">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Profissional *</label>
+                    <input type="text" id="profissional" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">ID Paciente *</label>
+                        <input type="text" id="idPaciente" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Estudo *</label>
+                        <input type="text" id="estudo" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Regional *</label>
+                        <select id="regional" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all">
+                            <option value="">Selecione...</option>
+                            <option value="MA">MA</option>
+                            <option value="CE">CE</option>
+                            <option value="PE">PE</option>
+                            <option value="BA">BA</option>
+                            <option value="SP">SP</option>
+                            <option value="DF">DF</option>
+                            <option value="RJ">RJ</option>
+                            <option value="PR">PR</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Visita *</label>
+                        <input type="text" id="visita" placeholder="Ex: Ciclo 1" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all">
+                    </div>
+                </div>
+
+                <hr class="border-slate-100 my-2">
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Realizou Procedimentos Extras?</label>
+                    <div class="flex gap-4 mb-2">
+                        <label class="inline-flex items-center gap-2 font-medium text-sm cursor-pointer">
+                            <input type="radio" name="procExtrasRadio" value="Não" checked onclick="toggleProcedimentos(false)" class="w-4 h-4 text-blue-600 focus:ring-blue-500"> Não
+                        </label>
+                        <label class="inline-flex items-center gap-2 font-medium text-sm cursor-pointer">
+                            <input type="radio" name="procExtrasRadio" value="Sim" onclick="toggleProcedimentos(true)" class="w-4 h-4 text-blue-600 focus:ring-blue-500"> Sim
+                        </label>
+                    </div>
+
+                    <div id="boxProcedimentos" class="hidden mt-3 pt-3 border-t border-slate-200 space-y-2 animate-fadeIn">
+                        <span class="block text-xs font-semibold text-slate-500 mb-1">Selecione os procedimentos:</span>
+                        <div class="grid grid-cols-1 gap-2">
+                            <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" value="Exames de imagens" class="proc-check rounded text-blue-600 w-4 h-4"> Exames de imagens</label>
+                            <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" value="Exames de análise clínica" class="proc-check rounded text-blue-600 w-4 h-4"> Exames de análise clínica</label>
+                            <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" value="Biópsia" class="proc-check rounded text-blue-600 w-4 h-4"> Biópsia</label>
+                            <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" value="Avaliações de segurança previstas" class="proc-check rounded text-blue-600 w-4 h-4"> Avaliações de segurança previstas</label>
+                            <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" id="checkOutros" value="Outros" onclick="toggleOutros(this.checked)" class="proc-check rounded text-blue-600 w-4 h-4"> Outros</label>
+                        </div>
+                        <div id="boxOutros" class="hidden mt-2">
+                            <input type="text" id="especificarOutros" placeholder="Especifique quais outros procedimentos..." class="w-full bg-white border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Medicamentos Faturáveis para a Instituição?</label>
+                    <div class="flex gap-4 mb-2">
+                        <label class="inline-flex items-center gap-2 font-medium text-sm cursor-pointer">
+                            <input type="radio" name="medFaturaveisRadio" value="Não" checked onclick="toggleMedicamentos(false)" class="w-4 h-4 text-blue-600 focus:ring-blue-500"> Não
+                        </label>
+                        <label class="inline-flex items-center gap-2 font-medium text-sm cursor-pointer">
+                            <input type="radio" name="medFaturaveisRadio" value="Sim" onclick="toggleMedicamentos(true)" class="w-4 h-4 text-blue-600 focus:ring-blue-500"> Sim
+                        </label>
+                    </div>
+
+                    <div id="boxMedicamentos" class="hidden mt-3 pt-3 border-t border-slate-200">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Nome do(s) Medicamento(s):</label>
+                        <input type="text" id="nomeMedicamento" placeholder="Ex: Medicamento X, Dose Y" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-all cursor-pointer text-center">
+                    📥 Salvar Registro
+                </button>
+            </form>
+        </section>
+
+        <section class="bg-white rounded-xl shadow-xs p-5 border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                <h2 class="text-md font-bold text-slate-700 flex items-center gap-2">
+                    <span>📊</span> Registros de Hoje
+                </h2>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="exportarExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2.5 px-3 rounded-lg shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                    🟢 Exportar Excel
+                </button>
+                <button onclick="limparBancoDados()" class="bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-600 text-sm font-semibold py-2.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                    🗑️ Limpar Tudo
+                </button>
+            </div>
+
+            <div id="listaRegistros" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+                <p class="text-slate-400 text-xs text-center py-4">Nenhum registro realizado ainda hoje.</p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Inicialização do Banco de Dados Local (LocalStorage)
+        let registros = JSON.parse(localStorage.getItem('pesquisa_clinica_dados')) || [];
+
+        // Atualizar visualização ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            renderizarRegistros();
+        });
+
+        // Controles de visibilidade dos campos dinâmicos
+        function toggleProcedimentos(show) {
+            document.getElementById('boxProcedimentos').classList.toggle('hidden', !show);
+            if (!show) {
+                // Reseta os campos se mudar para não
+                document.querySelectorAll('.proc-check').forEach(el => el.checked = false);
+                toggleOutros(false);
+            }
+        }
+
+        function toggleOutros(show) {
+            document.getElementById('boxOutros').classList.toggle('hidden', !show);
+            if (!show) document.getElementById('especificarOutros').value = '';
+        }
+
+        function toggleMedicamentos(show) {
+            document.getElementById('boxMedicamentos').classList.toggle('hidden', !show);
+            if (!show) document.getElementById('nomeMedicamento').value = '';
+        }
+
+        // Salvar dados no formulário
+        function salvarRegistro(event) {
+            event.preventDefault();
+
+            // Capturar procedimentos selecionados
+            let procedimentosSelecionados = [];
+            if (document.querySelector('input[name="procExtrasRadio"]:checked').value === "Sim") {
+                document.querySelectorAll('.proc-check:checked').forEach(chk => {
+                    if (chk.value === "Outros") {
+                        const espec = document.getElementById('especificarOutros').value.trim();
+                        procedimentosSelecionados.push(`Outros (${espec ? espec : 'Não especificado'})`);
+                    } else {
+                        procedimentosSelecionados.push(chk.value);
+                    }
+                });
+                if(procedimentosSelecionados.length === 0) procedimentosSelecionados.push("Sim (Nenhum selecionado)");
+            } else {
+                procedimentosSelecionados.push("Não");
+            }
+
+            // Capturar medicamento faturável
+            let medicamentoFaturavel = "Não";
+            if (document.querySelector('input[name="medFaturaveisRadio"]:checked').value === "Sim") {
+                const medNome = document.getElementById('nomeMedicamento').value.trim();
+                medicamentoFaturavel = medNome ? medNome : "Sim (Não especificado)";
+            }
+
+            // Objeto do registro
+            const novoRegistro = {
+                DataHora: new Date().toLocaleString('pt-BR'),
+                Profissional: document.getElementById('profissional').value.trim(),
+                ID_Paciente: document.getElementById('idPaciente').value.trim(),
+                Estudo: document.getElementById('estudo').value.trim(),
+                Regional: document.getElementById('regional').value,
+                Visita: document.getElementById('visita').value.trim(),
+                Procedimentos_Extras: procedimentosSelecionados.join(' | '),
+                Medicamentos_Faturaveis: medicamentoFaturavel
+            };
+
+            // Adicionar ao array e salvar no LocalStorage
+            registros.unshift(novoRegistro); // Adiciona no início da lista
+            localStorage.setItem('pesquisa_clinica_dados', JSON.stringify(registros));
+
+            // Resetar formulário e atualizar interface
+            document.getElementById('formVisita').reset();
+            toggleProcedimentos(false);
+            toggleMedicamentos(false);
+            renderizarRegistros();
+            
+            alert('✓ Registro salvo com sucesso localmente!');
+        }
+
+        // Atualizar lista de itens na tela do celular
+        function renderizarRegistros() {
+            const container = document.getElementById('listaRegistros');
+            const contador = document.getElementById('contador');
+            
+            contador.textContent = `${registros.length} ${registros.length === 1 ? 'Visita' : 'Visitas'}`;
+
+            if (registros.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-xs text-center py-4">Nenhum registro realizado ainda hoje.</p>';
+                return;
+            }
+
+            container.innerHTML = registros.map((reg, index) => `
+                <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs space-y-1 relative">
+                    <div class="flex justify-between font-bold text-slate-700">
+                        <span>ID: ${reg.ID_Paciente} (${reg.Regional})</span>
+                        <span class="text-slate-400 font-normal">${reg.DataHora.split(' ')[1]}</span>
+                    </div>
+                    <p><span class="text-slate-400 font-medium">Estudo:</span> ${reg.Estudo} | <span class="text-slate-400 font-medium">Visita:</span> ${reg.Visita}</p>
+                    <p><span class="text-slate-400 font-medium">Proc. Extras:</span> <span class="${reg.Procedimentos_Extras !== 'Não' ? 'text-amber-600 font-semibold' : ''}">${reg.Procedimentos_Extras}</span></p>
+                    <p><span class="text-slate-400 font-medium">Medicamentos:</span> <span class="${reg.Medicamentos_Faturaveis !== 'Não' ? 'text-emerald-600 font-semibold' : ''}">${reg.Medicamentos_Faturaveis}</span></p>
+                    <p class="text-[10px] text-slate-400 pt-1 border-t border-slate-100">Por: ${reg.Profissional}</p>
+                </div>
+            `).join('');
+        }
+
+        // Limpar os registros locais salvos no aparelho
+        function limparBancoDados() {
+            if (registros.length === 0) {
+                alert('Não há registros para limpar.');
+                return;
+            }
+            if (confirm('⚠️ ATENÇÃO:\nVocê tem certeza que deseja apagar TODOS os registros salvos neste celular hoje? Certifique-se de ter exportado para o Excel antes.')) {
+                registros = [];
+                localStorage.removeItem('pesquisa_clinica_dados');
+                renderizarRegistros();
+                alert('Banco de dados local limpo com sucesso.');
+            }
+        }
+
+        // Geração da planilha Excel (.xlsx) perfeitamente tabulada
+        function exportarExcel() {
+            if (registros.length === 0) {
+                alert('Nenhum dado encontrado para exportar.');
+                return;
+            }
+
+            // Inverter para ordem cronológica ao exportar para o faturamento
+            const dadosExportar = [...registros].reverse();
+
+            // Cria uma nova planilha de trabalho (Workbook)
+            const wb = XLSX.utils.book_new();
+            
+            // Converte o array de objetos JSON diretamente para colunas do Excel
+            const ws = XLSX.utils.json_to_sheet(dadosExportar);
+
+            // Ajuste básico de largura das colunas para leitura confortável
+            const maxW = [{wch:18}, {wch:20}, {wch:15}, {wch:18}, {wch:10}, {wch:12}, {wch:45}, {wch:35}];
+            ws['!cols'] = maxW;
+
+            // Anexa a planilha criada ao Workbook
+            XLSX.utils.book_append_sheet(wb, ws, "Faturamento Pesquisa");
+
+            // Define a data atual para o nome do arquivo gerado
+            const dataHoje = new Date().toISOString().split('T')[0];
+            
+            // Executa o download automático no celular ou PC
+            XLSX.writeFile(wb, `Faturamento_Pesquisa_Clinica_${dataHoje}.xlsx`);
+        }
+    </script>
+</body>
+</html>
